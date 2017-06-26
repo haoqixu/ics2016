@@ -36,6 +36,25 @@ static int cmd_q(char *args) {
 	return -1;
 }
 
+static int cmd_x(char *args) {
+	return 0;
+}
+
+static int cmd_info(char *args) {
+	char *subcmd = strtok(NULL, " ");
+	int i;
+
+    if (subcmd == NULL) {
+        /* Print Error Message */
+    } else if (strcmp(subcmd, "r") == 0) {
+	    for(i = R_EAX; i <= R_EDI; i ++)
+            printf("%s\t%#x\n", regsl[i], reg_l(i));
+    } else if (strcmp(subcmd, "w") == 0) {
+        /* TODO: implement info watchpoint */
+    }
+	return 0;
+}
+
 static int cmd_si(char *args) {
     int n;
     if (args == NULL || (sscanf(args, "%i", &n) != 1))
@@ -55,6 +74,8 @@ static struct {
 	{ "c", "Continue the execution of the program", cmd_c },
 	{ "q", "Exit NEMU", cmd_q },
     { "si", "Step [N] instruction exactly.", cmd_si },
+    { "info", "", cmd_info },
+    { "x", "", cmd_x },
 
 	/* TODO: Add more commands */
 
