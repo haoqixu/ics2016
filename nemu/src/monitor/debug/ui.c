@@ -63,6 +63,16 @@ static int cmd_si(char *args) {
     return 0;
 }
 
+static int cmd_p(char *args) {
+    bool success;
+    uint32_t result = expr(args, &success);
+    if (success)
+        printf("%d\n", result);
+    else
+        printf("Invalid expression.\n");
+    return 0;
+}
+
 static int cmd_help(char *args);
 
 static struct {
@@ -74,8 +84,9 @@ static struct {
 	{ "c", "Continue the execution of the program", cmd_c },
 	{ "q", "Exit NEMU", cmd_q },
     { "si", "Step [N] instruction exactly.", cmd_si },
-    { "info", "", cmd_info },
-    { "x", "", cmd_x },
+    { "info", "[r] List registers; [w] List watchpoints.", cmd_info },
+    { "x", "Examine the contents of memory.", cmd_x },
+    { "p", "Print the value of the expression", cmd_p},
 
 	/* TODO: Add more commands */
 
