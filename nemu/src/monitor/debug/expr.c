@@ -235,7 +235,7 @@ static uint32_t eval(bool *success)
                 if (token_type == SUB && tokens[i-1].type != RPARE) {
                     token_type = NEG_;
                 }
-                else if (token_type == MUL) {
+                else if (token_type == MUL && tokens[i-1].type != RPARE) {
                     token_type = DEREF_;
                 } else if (token_type != LPARE && tokens[i-1].type != RPARE){
                     *success = false;
