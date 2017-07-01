@@ -37,7 +37,30 @@ static int cmd_q(char *args) {
 }
 
 static int cmd_x(char *args) {
-	return 0;
+    int n;
+    bool success;
+    uint32_t base;
+	char *N = strtok(NULL, " ");
+    char *expr_str = args + strlen(N) + 1;
+
+    if (N == NULL || args == NULL) {
+        printf("Invalid command.\n");
+        return 0;
+    }
+    base = expr(expr_str, &success);
+    if (!success) {
+        printf("Invalid command.\n");
+        return 0;
+    }
+    if ((sscanf(N, "%i", &n) != 1))
+        n = 1;
+
+    while (n--) {
+        printf("0x%032x\n", swaddr_read(base, 4));
+        base += 4;
+    }
+
+    return 0;
 }
 
 static int cmd_info(char *args) {
@@ -45,7 +68,7 @@ static int cmd_info(char *args) {
 	int i;
 
     if (subcmd == NULL) {
-        /* Print Error Message */
+        printf("nothing to do.\n");
     } else if (strcmp(subcmd, "r") == 0) {
 	    for(i = R_EAX; i <= R_EDI; i ++)
             printf("%s\t%#x\n", regsl[i], reg_l(i));
