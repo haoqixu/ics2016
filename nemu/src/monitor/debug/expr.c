@@ -230,7 +230,8 @@ static uint32_t eval(bool *success)
     nr_token++;
     for (i = 0; TOP_OP != EOS_ || tokens[i].type != EOS_; ) {
         if (is_op((token_type = tokens[i].type))) {
-            if (is_op(tokens[i-1].type)) {
+
+            if (i > 0 && is_op(tokens[i-1].type)) {
                 if (tokens[i].type == SUB) {
                     tokens[i].type = NEG_;
                 }
