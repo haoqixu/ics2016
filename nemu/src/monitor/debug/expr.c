@@ -232,11 +232,11 @@ static uint32_t eval(bool *success)
         if (is_op((token_type = tokens[i].type))) {
 
             if (i == 0 || is_op(tokens[i-1].type)) {
-                if (tokens[i].type == SUB) {
-                    tokens[i].type = NEG_;
+                if (token_type == SUB) {
+                    token_type = NEG_;
                 }
-                else if (tokens[i].type == MUL) {
-                    tokens[i].type = DEREF_;
+                else if (token_type == MUL) {
+                    token_type = DEREF_;
                 } else {
                     *success = false;
                     return -1;
