@@ -221,7 +221,7 @@ static uint32_t eval(bool *success)
     static uint32_t obj_stack[32];
     int obj_i = 0, op_i = 0;
     int token_type, i;
-    int8_t op;
+    int op;
     uint32_t o1, o2;
 
     *success = true;
