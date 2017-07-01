@@ -252,7 +252,7 @@ static uint32_t eval(bool *success)
                     i++;
                     break;
                 default:
-                    //*success = false;
+                    *success = false;
                     return -1;
             }
         } else if (token_type == REG) {
