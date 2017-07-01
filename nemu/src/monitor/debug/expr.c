@@ -237,7 +237,7 @@ static uint32_t eval(bool *success)
                 }
                 else if (token_type == MUL) {
                     token_type = DEREF_;
-                } else {
+                } else if (token_type != LPARE){
                     *success = false;
                     return -1;
                 }
