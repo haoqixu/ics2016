@@ -270,21 +270,34 @@ static uint32_t eval(bool *success)
             }
         } else if (token_type == REG) {
             int j;
+            const char *reg = tokens[i++].str + 1; /* skip '$' */
             for (j = R_EAX; j <= R_EDI; j++) {
-                if (strcmp(regsl[j], tokens[i].str+1) == 0) {  /* skip '$' */
-                    PUSH_OBJ(reg_l(j));
-                    break;
-                }
-                if (strcmp(regsw[j], tokens[i].str+1) == 0) {  /* skip '$' */
+                if (strcmp(regsl[j], reg) == 0) {  /* skip '$' */
                     PUSH_OBJ(reg_l(j));
                     break;
                 }
             }
-            if (j > R_EDI) {
-                *success = false;
-                return 0;
+            if (j <= R_EDI)
+                continue;
+            for (j = R_AX; j <= R_DI; j++) {
+                if (strcmp(regsw[j], reg) == 0) {  /* skip '$' */
+                    PUSH_OBJ(reg_w(j));
+                    break;
+                }
             }
-            i++;
+            if (j <= R_DI)
+                continue;
+            for (j = R_AL; j <= R_BH; j++) {
+                if (strcmp(regsb[j], reg) == 0) {  /* skip '$' */
+                    PUSH_OBJ(reg_b(j));
+                    break;
+                }
+            }
+            if (j <= R_DI)
+                continue;
+
+            *success = false;
+            return 0;
         } else {
             int j;
             sscanf(tokens[i].str, "%i", &j);
