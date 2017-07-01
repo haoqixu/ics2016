@@ -88,7 +88,7 @@ static struct rule {
 	{"&&", AND},
 	{"\\|\\|", OR},
     {"!", NOT},                     // logcal not
-    {"\\$.+", REG},                 // register name
+    {"\\$[a-zA-Z]+", REG},          // register name
     {"0x[0-9a-fA-F]+", HEX},
     {"0[0-7]+", OCT},
     {"[0-9]+", DEC},
