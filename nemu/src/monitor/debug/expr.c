@@ -230,6 +230,18 @@ static uint32_t eval(bool *success)
     nr_token++;
     for (i = 0; TOP_OP != EOS_ || tokens[i].type != EOS_; ) {
         if (is_op((token_type = tokens[i].type))) {
+            if (is_op(tokens[i-1].type)) {
+                if (tokens[i].type == SUB) {
+                    tokens[i].type = NEG_;
+                }
+                else if (tokens[i].type == MUL) {
+                    tokens[i].type = DEREF_;
+                } else {
+                    *success = false;
+                    return -1;
+                }
+            }
+
             switch (op_preced(TOP_OP, token_type)) {
                 case '<':
                     PUSH_OP(token_type);
