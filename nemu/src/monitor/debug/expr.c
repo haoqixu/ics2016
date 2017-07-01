@@ -237,7 +237,7 @@ static uint32_t eval(bool *success)
                 }
                 else if (token_type == MUL) {
                     token_type = DEREF_;
-                } else if (token_type != LPARE && tokens[i-1].type == RPARE){
+                } else if (token_type != LPARE && tokens[i-1].type != RPARE){
                     *success = false;
                     return -1;
                 }
