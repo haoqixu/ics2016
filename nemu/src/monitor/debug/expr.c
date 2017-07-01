@@ -257,15 +257,20 @@ static uint32_t eval(bool *success)
         } else if (token_type == REG) {
             int j;
             for (j = R_EAX; j <= R_EDI; j++) {
-                if (strcmp(regsl[j], tokens[i].str) == 0)
+                if (strcmp(regsl[j], tokens[i].str) == 0) {
                     PUSH_OBJ(reg_l(j));
-                if (strcmp(regsw[j], tokens[i].str) == 0)
+                    break;
+                }
+                if (strcmp(regsw[j], tokens[i].str) == 0) {
                     PUSH_OBJ(reg_l(j));
+                    break;
+                }
             }
             if (j > R_EDI) {
                 *success = false;
                 return 0;
             }
+            i++;
         } else {
             int j;
             sscanf(tokens[i].str, "%i", &j);
