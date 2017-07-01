@@ -251,8 +251,8 @@ static uint32_t eval(bool *success)
                     i++;
                     break;
                 default:
-                    *success = false;
-                    return 0;
+                    //*success = false;
+                    return -1;
             }
         } else if (token_type == REG) {
             int j;
