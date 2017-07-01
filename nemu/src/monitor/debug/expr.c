@@ -50,7 +50,7 @@ static int8_t preced[][EOS_-NOTYPE] = {
  */
 static inline int8_t op_preced(int op1, int op2)
 {
-	return preced[op1-NOTYPE+1][op2-NOTYPE+1];
+	return preced[op1-NOTYPE-1][op2-NOTYPE-1];
 }
 
 
