@@ -224,6 +224,7 @@ static uint32_t eval(bool *success)
     int8_t op;
     uint32_t o1, o2;
 
+    *success = true;
     PUSH_OP(EOS_);
     tokens[nr_token].type = EOS_;  /* guard */
     nr_token++;
@@ -251,7 +252,7 @@ static uint32_t eval(bool *success)
                     i++;
                     break;
                 default:
-                    //*success = false;
+                    *success = false;
                     return -1;
             }
         } else if (token_type == REG) {
@@ -278,7 +279,6 @@ static uint32_t eval(bool *success)
             i++;
         }
     }
-    *success = true;
     return obj_stack[0];
 }
 
