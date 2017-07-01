@@ -228,7 +228,7 @@ static uint32_t eval(bool *success)
     PUSH_OP(EOS_);
     tokens[nr_token].type = EOS_;  /* guard */
     nr_token++;
-    for (i = 0; TOP_OP != EOS_ || i != nr_token; ) {
+    for (i = 0; TOP_OP != EOS_ || tokens[i].type != EOS_; ) {
         if (is_op((token_type = tokens[i].type))) {
             switch (op_preced(TOP_OP, token_type)) {
                 case '<':
@@ -268,7 +268,7 @@ static uint32_t eval(bool *success)
                 }
             }
             if (j > R_EDI) {
-                //*success = false;
+                *success = false;
                 return 0;
             }
             i++;
