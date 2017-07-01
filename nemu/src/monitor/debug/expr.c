@@ -258,11 +258,11 @@ static uint32_t eval(bool *success)
         } else if (token_type == REG) {
             int j;
             for (j = R_EAX; j <= R_EDI; j++) {
-                if (strcmp(regsl[j], tokens[i].str) == 0) {
+                if (strcmp(regsl[j], tokens[i].str+1) == 0) {  /* skip '$' */
                     PUSH_OBJ(reg_l(j));
                     break;
                 }
-                if (strcmp(regsw[j], tokens[i].str) == 0) {
+                if (strcmp(regsw[j], tokens[i].str+1) == 0) {  /* skip '$' */
                     PUSH_OBJ(reg_l(j));
                     break;
                 }
