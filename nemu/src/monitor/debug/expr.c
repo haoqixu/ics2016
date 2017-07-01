@@ -7,12 +7,52 @@
 #include <regex.h>
 
 enum {
-	NOTYPE = 256, EQ, NEQ, LE, GE, AND, OR, REG, HEX, OCT, DEC,
+	NOTYPE = 256,
     DEREF_, NEG_,
-
+    EQ, NEQ, LE, GE, LT, GT, AND, OR, PLUS, SUB, LPARE, RPARE, MUL, DIV, NOT,
+    EOS_,
+    REG, HEX, OCT, DEC,
 	/* TODO: Add more token types */
-
 };
+
+#define G '>',
+#define L '<',
+#define E '=',
+#define _ 0,
+static int8_t preced[][EOS_-NOTYPE] = {
+	/* DEREF */ { L L G G G G G G G G G G L G G G L G },
+	/* NEG_  */ { L L G G G G G G G G G G L G G G L G },
+	/* EQ    */ { L L G G G G G G G G L L L G L L L G },
+	/* NEQ   */ { L L G G G G G G G G L L L G L L L G },
+	/* LE    */ { L L G G G G G G G G L L L G L L L G },
+	/* GE    */ { L L G G G G G G G G L L L G L L L G },
+	/* LT    */ { L L G G G G G G G G L L L G L L L G },
+	/* GT    */ { L L G G G G G G G G L L L G L L L G },
+	/* AND   */ { L L L L L L L L G G L L L G L L L G },
+	/* OR    */ { L L L L L L L L L G L L L G L L L G },
+	/* PLUS  */ { L L G G G G G G G G G G L G L L L G },
+	/* SUB   */ { L L G G G G G G G G G G L G L L L G },
+	/* LPARE */ { L L L L L L L L L L L L L E L L L _ },
+	/* RPARE */ { G G G G G G G G G G G G E G G G G G },
+	/* MUL   */ { L L G G G G G G G G G G L G G G L G },
+	/* DIV   */ { L L G G G G G G G G G G L G G G L G },
+	/* NOT   */ { L L G G G G G G G G G G L G G G L G },
+	/* EOS_  */ { L L L L L L L L L L L L L _ L L L E },
+};
+#undef G
+#undef L
+#undef E
+#undef _
+
+/*
+ * op1: the operator on the top of stack
+ * op2: the operator get from tokens
+ */
+static inline int8_t op_preced(int op1, int op2)
+{
+	return preced[op1-NOTYPE+1][op2-NOTYPE+1];
+}
+
 
 static struct rule {
 	char *regex;
@@ -33,21 +73,21 @@ static struct rule {
      */
 
 	{" +",	NOTYPE},				// spaces
-    {"\\(", '('},
-    {"\\)", ')'},
-	{"\\+", '+'},
-	{"-", '-'},
-	{"\\*", '*'},
-	{"/", '/'},
+    {"\\(", LPARE},
+    {"\\)", RPARE},
+	{"\\+", PLUS},
+	{"-", SUB},
+	{"\\*", MUL},
+	{"/", DIV},
 	{"==", EQ},						// equal
 	{"!=", NEQ},					// not equal
 	{"<=", LE},						// less or equal
 	{">=", GE},						// greater or equal
-    {">", '>'},
-    {"<", '<'},
+    {">", GT},
+    {"<", LT},
 	{"&&", AND},
 	{"\\|\\|", OR},
-    {"!", '!'},                     // logcal not
+    {"!", NOT},                     // logcal not
     {"\\$.+", REG},                 // register name
     {"0x[0-9a-fA-F]+", HEX},
     {"0[0-7]+", OCT},
@@ -113,11 +153,15 @@ static bool make_token(char *e) {
 				switch(rules[i].token_type) {
                     case NOTYPE: continue;
 					default:
-                        tokens[nr_token].type = rules[i].token_type;
                         tokens[nr_token].str[0] = '\0';
                         strncat(tokens[nr_token].str, substr_start,
                                 (substr_len < sizeof(tokens[nr_token].str))
                                 ? substr_len : sizeof(tokens[nr_token].str));
+                        /* through down */
+                    case EQ: case NEQ: case LE: case GE: case AND: case OR:
+                    case PLUS: case SUB: case LPARE: case RPARE: case MUL:
+                    case DIV: case LT: case GT: case NOT: case EOS_:
+                        tokens[nr_token].type = rules[i].token_type;
                         nr_token++;
 				}
 
@@ -135,71 +179,30 @@ static bool make_token(char *e) {
 	return true; 
 }
 
-static int8_t op_cmp(int op1, int op2)
-{
-    int i = 2;
-    int op = op1;
-    int8_t op_priority[2];
-
-    for (i = 0; i < 2; i++, op = op2) {
-        switch (op) {
-            case DEREF_: case NEG_:
-                op_priority[i] = 5;
-                break;
-            case '*': case '/':
-                op_priority[i] = 4;
-                break;
-            case '+': case '-':
-                op_priority[i] = 3;
-                break;
-            case EQ: case NEQ: case LE: case GE: case '<': case '>':
-                op_priority[i] = 2;
-                break;
-            case AND:
-                op_priority[i] = 1;
-                break;
-            case OR:
-                op_priority[i] = 0;
-                break;
-            default:
-                break;
-        }
-    }
-    return op_priority[0] - op_priority[1];
-}
-
 static inline bool is_op(int type)
 {
-    switch (type) {
-        case '(': case ')': case '+': case '-': case '*': case '/':
-        case EQ: case NEQ: case LE: case GE: case '>': case '<':
-        case AND: case OR: case '!':
-            return true;
-        default:
-            return false;
-    }
+    if (type > NOTYPE && type <= EOS_)
+        return true;
+    return false;
 }
 
-
-static int op_stack[32];
-static uint32_t obj_stack[32];
-static int i, op_i, obj_i;
 
 static uint32_t operate(int op, uint32_t obj1, uint32_t obj2)
 {
     switch (op) {
         case DEREF_:    return swaddr_read(obj1, 4);
         case NEG_:      return -obj1;
-        case '*':       return obj1 * obj2;
-        case '/':       return obj1 / obj2;
-        case '+':       return obj1 + obj2;
-        case '-':       return obj1 - obj2;
+        case NOT:       return !obj1;
+        case MUL:       return obj1 * obj2;
+        case DIV:       return obj1 / obj2;
+        case PLUS:      return obj1 + obj2;
+        case SUB:       return obj1 - obj2;
         case EQ:        return obj1 == obj2;
         case NEQ:       return obj1 != obj2;
         case LE:        return obj1 <= obj2;
         case GE:        return obj1 >= obj2;
-        case '<':       return obj1 < obj2;
-        case '>':       return obj1 > obj2;
+        case LT:        return obj1 < obj2;
+        case GT:        return obj1 > obj2;
         case AND:       return obj1 && obj2;
         case OR:        return obj1 || obj2;
         default:        return 0;
@@ -207,88 +210,71 @@ static uint32_t operate(int op, uint32_t obj1, uint32_t obj2)
 }
 
 
+#define PUSH_OP(x) do { op_stack[op_i++] = (x); } while (0)
+#define PUSH_OBJ(x) do { obj_stack[obj_i++] = (x); } while (0)
+#define TOP_OP (op_stack[op_i-1])
+#define POP_OP() do { --op_i; } while (0)
+#define POP_OBJ(x) do { x = obj_stack[--obj_i]; } while (0)
 static uint32_t eval(bool *success)
 {
-    int op;
+    static int op_stack[32];
+    static uint32_t obj_stack[32];
+    int obj_i = 0, op_i = 0;
+    int token_type, i;
+    int8_t op;
+    uint32_t o1, o2;
 
+    PUSH_OP(EOS_);
+    tokens[nr_token].type = EOS_;  /* guard */
+    nr_token++;
+    for (i = 0; TOP_OP != EOS_ || i != nr_token; ) {
+        if (is_op((token_type = tokens[i].type))) {
+            switch (op_preced(TOP_OP, token_type)) {
+                case '<':
+                    PUSH_OP(token_type);
+                    i++;
+                    break;
+                case '>':
+                    op = TOP_OP;
+                    POP_OP();
+                    if (op == NOT || op == NEG_ || op == DEREF_) {
+                        POP_OBJ(o1);
+                        PUSH_OBJ(operate(op, o1, 0));
+                    } else {
+                        POP_OBJ(o2);
+                        POP_OBJ(o1);
+                        PUSH_OBJ(operate(op, o1, o2));
+                    }
+                    break;
+                case '=':
+                    POP_OP();
+                    i++;
+                    break;
+                default:
+                    *success = false;
+                    return 0;
+            }
+        } else if (token_type == REG) {
+            int j;
+            for (j = R_EAX; j <= R_EDI; j++) {
+                if (strcmp(regsl[j], tokens[i].str) == 0)
+                    PUSH_OBJ(reg_l(j));
+                if (strcmp(regsw[j], tokens[i].str) == 0)
+                    PUSH_OBJ(reg_l(j));
+            }
+            if (j > R_EDI) {
+                *success = false;
+                return 0;
+            }
+        } else {
+            int j;
+            sscanf(tokens[i].str, "%i", &j);
+            PUSH_OBJ(j);
+            i++;
+        }
+    }
     *success = true;
-    for (i = op_i = obj_i = 0; i < nr_token; i++) {
-        if (is_op(tokens[i].type)) {
-            /* is an operator */
-
-            if (i == 0 || is_op(tokens[i-1].type)) {
-                if (tokens[i].type == '-') {
-                    tokens[i].type = NEG_;
-                } else if (tokens[i].type == '*') {
-                    tokens[i].type = DEREF_;
-                } else {
-                    *success = false;
-                    return 0;
-                }
-            }
-
-            if (op_i == 0 || tokens[i].type == '('){
-                op_stack[op_i++] = tokens[i].type;
-            } else if (tokens[i].type == ')') {
-                while ((op = op_stack[--op_i]) != '(') {
-                    if (op == DEREF_ || op == NEG_) {
-                        obj_stack[obj_i-1] = operate(op, obj_stack[obj_i-1], 0);
-                    } else {
-                        obj_stack[obj_i-2] = operate(op,
-                            obj_stack[obj_i-2], obj_stack[obj_i-1]);
-                        obj_i--;
-                    }
-                }
-            } else {
-                op = op_stack[op_i-1];
-                while (op != '(' && op_cmp(tokens[i].type, op) < 0) {
-                    if (op == DEREF_ || op == NEG_) {
-                        obj_stack[obj_i-1] = operate(op, obj_stack[obj_i-1], 0);
-                    } else {
-                        obj_stack[obj_i-2] = operate(op,
-                            obj_stack[obj_i-2], obj_stack[obj_i-1]);
-                        obj_i--;
-                    }
-                    op_i--;
-                    op = op_stack[op_i-1];
-                }
-                op_stack[op_i++] = tokens[i].type;
-            }
-
-        } else {
-            /* is a number or register */
-            /* TODO: Modify this code if cpu struct is changed. */
-            if (tokens[i].type == REG) {
-                int j;
-                for (j = R_EAX; j <= R_EDI; j++) {
-                    if (strcmp(regsl[i], tokens[i].str+1) == 0)
-                        obj_stack[obj_i++] = reg_l(j);
-                    else if (strcmp(regsw[i], tokens[i].str+1) == 0)
-                        obj_stack[obj_i++] = reg_w(j);
-                    else if (strcmp(regsb[i], tokens[i].str+1) == 0)
-                        obj_stack[obj_i++] = reg_b(j);
-                }
-                if (j > R_EDI) {
-                    *success = false;
-                    return 0;
-                }
-            } else {
-                sscanf(tokens[i].str, "%i", &obj_stack[obj_i++]);
-            }
-        }
-    }
-    while (op_i-- > 0) {
-        op = op_stack[op_i];
-        if (op == DEREF_ || op == NEG_) {
-            obj_stack[obj_i-1] = operate(op, obj_stack[obj_i-1], 0);
-        } else {
-            obj_stack[obj_i-2] = operate(op,
-                obj_stack[obj_i-2], obj_stack[obj_i-1]);
-            obj_i--;
-        }
-    }
     return obj_stack[0];
-
 }
 
 uint32_t expr(char *e, bool *success) {
