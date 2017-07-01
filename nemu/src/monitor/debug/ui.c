@@ -56,7 +56,7 @@ static int cmd_x(char *args) {
         n = 1;
 
     while (n--) {
-        printf("0x%032x\n", swaddr_read(base, 4));
+        printf("0x%08x: 0x%08x\n", base, swaddr_read(base, 4));
         base += 4;
     }
 
