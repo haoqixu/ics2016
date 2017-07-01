@@ -65,11 +65,20 @@ static int cmd_si(char *args) {
 
 static int cmd_p(char *args) {
     bool success;
-    uint32_t result = expr(args, &success);
-    if (success)
-        printf("%d\n", result);
+    uint32_t result;
+    if (args)
+        result = expr(args, &success);
     else
-        printf("Invalid expression.\n");
+        goto err;
+
+    if (success) {
+        printf("%d\n", result);
+        goto out;
+    }
+
+err:
+    printf("Invalid expression.\n");
+out:
     return 0;
 }
 

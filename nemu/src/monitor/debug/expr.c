@@ -151,7 +151,7 @@ static bool make_token(char *e) {
 				 */
 
 				switch(rules[i].token_type) {
-                    case NOTYPE: continue;
+                    case NOTYPE: break;
 					default:
                         tokens[nr_token].str[0] = '\0';
                         strncat(tokens[nr_token].str, substr_start,
