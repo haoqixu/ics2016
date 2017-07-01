@@ -268,7 +268,7 @@ static uint32_t eval(bool *success)
                 }
             }
             if (j > R_EDI) {
-                *success = false;
+                //*success = false;
                 return 0;
             }
             i++;
