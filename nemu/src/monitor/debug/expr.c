@@ -232,7 +232,7 @@ static uint32_t eval(bool *success)
         if (is_op((token_type = tokens[i].type))) {
 
             if (i == 0 || is_op(tokens[i-1].type)) {
-                if (token_type == SUB) {
+                if (token_type == SUB && tokens[i-1].type != RPARE) {
                     token_type = NEG_;
                 }
                 else if (token_type == MUL) {
