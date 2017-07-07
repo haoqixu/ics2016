@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "monitor/watchpoint.h"
 #include "monitor/expr.h"
 
@@ -20,4 +21,45 @@ void init_wp_pool() {
 
 /* TODO: Implement the functionality of watchpoint */
 
+WP* new_wp()
+{
+    Assert(free_, "There is no more WP.");
+    WP *t = free_;
+    free_ = free_->next;
+    t->next = head;
+    head = t;
+    return t;
+}
 
+void free_wp(WP *wp)
+{
+    WP **cur;
+    for (cur = &head; *cur; cur = &(*cur)->next) {
+        if (*cur == wp) {
+            *cur = wp->next;
+            wp->next = free_;
+            free(wp->expr);
+            free_ = wp;
+            break;
+        }
+    }
+}
+
+bool check_wp()
+{
+    WP *p;
+    int val;
+    bool success;
+    bool if_change = false;
+
+    for (p = head; p; p = p->next) {
+        val = expr(p->expr, &success);
+        Assert(success, "invalid expression.");
+        if (val != p->old) {
+            printf("Old value = %d\nNew value = %d\n", p->old, val);
+            p->old = val;
+            if_change = true;
+        }
+    }
+    return !if_change;
+}

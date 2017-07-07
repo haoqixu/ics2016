@@ -105,6 +105,27 @@ out:
     return 0;
 }
 
+static int cmd_w(char *args) {
+    bool success;
+    uint32_t result;
+    if (!args)
+        goto err;
+
+    result = expr(args, &success);
+    if (!success)
+        goto err;
+
+    WP *wp = new_wp();
+    wp->expr = strdup(args);
+    wp->old = result;
+    printf("Watchpoint %d: %s\n", wp->NO, wp->expr);
+    return 0;
+
+err:
+    printf("Invalid expression.\n");
+    return 0;
+}
+
 static int cmd_help(char *args);
 
 static struct {
@@ -119,6 +140,7 @@ static struct {
     { "info", "[r] List registers; [w] List watchpoints.", cmd_info },
     { "x", "Examine the contents of memory.", cmd_x },
     { "p", "Print the value of the expression", cmd_p},
+    { "w", "Watchpoint", cmd_w},
 
 	/* TODO: Add more commands */
 
