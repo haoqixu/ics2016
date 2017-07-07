@@ -63,3 +63,21 @@ bool check_wp()
     }
     return !if_change;
 }
+
+WP *find_wp(int n)
+{
+    WP *p;
+    for (p = head; p; p = p->next) {
+        if (p->NO == n)
+            return p;
+    }
+    return NULL;
+}
+
+void print_wp()
+{
+    WP *p;
+    printf("Num\tExpression\n");
+    for (p = head; p; p = p->next)
+        printf("%d\t%s\n", p->NO, p->expr);
+}
