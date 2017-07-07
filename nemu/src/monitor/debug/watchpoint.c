@@ -56,7 +56,8 @@ bool check_wp()
         val = expr(p->expr, &success);
         Assert(success, "invalid expression.");
         if (val != p->old) {
-            printf("Old value = %d\nNew value = %d\n", p->old, val);
+            printf("\n%s:\nOld value = %d\nNew value = %d\n",
+                   p->expr, p->old, val);
             p->old = val;
             if_change = true;
         }
