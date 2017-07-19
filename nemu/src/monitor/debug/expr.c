@@ -271,6 +271,7 @@ static uint32_t eval(bool *success)
         } else if (token_type == REG) {
             int j;
             const char *reg = tokens[i++].str + 1; /* skip '$' */
+            /* GPR */
             for (j = R_EAX; j <= R_EDI; j++) {
                 if (strcmp(regsl[j], reg) == 0) {  /* skip '$' */
                     PUSH_OBJ(reg_l(j));
@@ -295,6 +296,11 @@ static uint32_t eval(bool *success)
             }
             if (j <= R_DI)
                 continue;
+            /* EIP */
+            if (strcmp("eip", reg) == 0) {
+                PUSH_OBJ(cpu.eip);
+                continue;
+            }
 
             *success = false;
             return 0;
