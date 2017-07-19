@@ -71,9 +71,9 @@ static int cmd_info(char *args) {
         printf("nothing to do.\n");
     } else if (strcmp(subcmd, "r") == 0) {
 	    for(i = R_EAX; i <= R_EDI; i ++)
-            printf("%s\t%#x\n", regsl[i], reg_l(i));
+            printf("%s\t0x%08x\n", regsl[i], reg_l(i));
         putchar('\n');
-        printf("eip\t%#x\n", cpu.eip);
+        printf("eip\t0x%08x\n", cpu.eip);
     } else if (strcmp(subcmd, "w") == 0) {
         /* TODO: implement info watchpoint */
         print_wp();
